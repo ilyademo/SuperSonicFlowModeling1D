@@ -1,0 +1,10 @@
+L 	1 	
+NX 	20	
+NT 	5
+CFL	0.2
+a	0.02
+BCType 	Periodic
+Init	forward_step
+Ul	5
+Ur	10
+schemeOrder 1

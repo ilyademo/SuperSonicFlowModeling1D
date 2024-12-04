@@ -1,0 +1,10 @@
+L 	1 	
+NX 	100	
+NT 	1000
+CFL	0.9
+a	0.02
+BCType 	Periodic
+Init	sin
+Ul	5
+Ur	10
+schemeOrder 1		

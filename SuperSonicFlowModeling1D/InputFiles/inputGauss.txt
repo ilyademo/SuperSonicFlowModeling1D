@@ -1,0 +1,11 @@
+L 	1 	
+NX 	320	
+NT 	10000
+CFL	0.05
+a	0.02
+BCType 	Periodic
+Init	forward_step
+Ul	5
+Ur	10
+schemeOrder 2
+TVD	van_albada

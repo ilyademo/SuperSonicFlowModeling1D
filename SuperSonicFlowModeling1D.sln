@@ -1,0 +1,41 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.31911.196
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "SuperSonicFlowModeling1D", "SuperSonicFlowModeling1D\SuperSonicFlowModeling1D.vcxproj", "{F349742C-64C1-48B0-8D54-8596CB35AA45}"
+EndProject
+Project("{6989167D-11E4-40FE-8C1A-2192A86A7E90}") = "GodunovFortran", "GodunovFortran\GodunovFortran.vfproj", "{01479C09-D420-4A94-91AA-E418881A7A68}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|x64 = Debug|x64
+		Debug|x86 = Debug|x86
+		Release|x64 = Release|x64
+		Release|x86 = Release|x86
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{F349742C-64C1-48B0-8D54-8596CB35AA45}.Debug|x64.ActiveCfg = Debug|x64
+		{F349742C-64C1-48B0-8D54-8596CB35AA45}.Debug|x64.Build.0 = Debug|x64
+		{F349742C-64C1-48B0-8D54-8596CB35AA45}.Debug|x86.ActiveCfg = Debug|Win32
+		{F349742C-64C1-48B0-8D54-8596CB35AA45}.Debug|x86.Build.0 = Debug|Win32
+		{F349742C-64C1-48B0-8D54-8596CB35AA45}.Release|x64.ActiveCfg = Release|x64
+		{F349742C-64C1-48B0-8D54-8596CB35AA45}.Release|x64.Build.0 = Release|x64
+		{F349742C-64C1-48B0-8D54-8596CB35AA45}.Release|x86.ActiveCfg = Release|Win32
+		{F349742C-64C1-48B0-8D54-8596CB35AA45}.Release|x86.Build.0 = Release|Win32
+		{01479C09-D420-4A94-91AA-E418881A7A68}.Debug|x64.ActiveCfg = Debug|x64
+		{01479C09-D420-4A94-91AA-E418881A7A68}.Debug|x64.Build.0 = Debug|x64
+		{01479C09-D420-4A94-91AA-E418881A7A68}.Debug|x86.ActiveCfg = Debug|Win32
+		{01479C09-D420-4A94-91AA-E418881A7A68}.Debug|x86.Build.0 = Debug|Win32
+		{01479C09-D420-4A94-91AA-E418881A7A68}.Release|x64.ActiveCfg = Release|x64
+		{01479C09-D420-4A94-91AA-E418881A7A68}.Release|x64.Build.0 = Release|x64
+		{01479C09-D420-4A94-91AA-E418881A7A68}.Release|x86.ActiveCfg = Release|Win32
+		{01479C09-D420-4A94-91AA-E418881A7A68}.Release|x86.Build.0 = Release|Win32
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {9B4CAFAD-E516-4805-87C9-E95C62FFCF7C}
+	EndGlobalSection
+EndGlobal

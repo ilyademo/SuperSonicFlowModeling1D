@@ -1,0 +1,15 @@
+L 	1 	
+NX 	100
+d_loc 50
+time 5e-4
+CFL 0.1
+pl 100000
+pr 5000
+rhol 1.2
+rhor 0.06
+u1 0.0
+u2 0.0
+gamma 1.4
+Cp 1005
+T 300
+scheme 3
