@@ -23,6 +23,20 @@ void ConservativeVariables::Set(const Array& vec, uint i)
 		(*vars[j])[i] = vec[j];
 }
 
+Array InviscidFluxes::GetFluxByValuesOnFace(FaceValues& f)
+{
+	Array flux(3, 0);
+	auto& f1 = *dynamic_cast<F1Funct*>(vars[0]);
+	auto& f2 = *dynamic_cast<F2Funct*>(vars[1]);
+	auto& f3 = *dynamic_cast<F3Funct*>(vars[2]);
+	
+	flux[0] = f1.Calculate(f.rhol, f.ul) + f1.Calculate(f.rhor, f.ur);
+	flux[1] = f2.Calculate(f.rhol, f.ul, f.pl) + f2.Calculate(f.rhor, f.ur, f.pr);
+	flux[2] = f3.Calculate(f.rhol, f.ul, f.pl) + f3.Calculate(f.rhor, f.ur, f.pr);
+
+	return flux;
+}
+
 Euler::Euler(const std::string& inputFile)
 {
 	Read(inputFile);
@@ -72,13 +86,24 @@ void Euler::Initialize()
 
 	factory = new InviscidFluxesFactory();
 	F = new InviscidFluxes(factory->create(vars, enrg_fnctrs->H));
-	SetWallBoundaryCondition();
+	//SetWallBoundaryCondition();
+	SetOpenBoundaryCondition();
 }
 
 void Euler::SetWallBoundaryCondition()
 {
 	vars.u[0] = -vars.u[1];
 	vars.u[x.size() - 1] = -vars.u[x.size() - 2];
+	vars.rho[0] = vars.rho[1];
+	vars.rho[x.size() - 1] = vars.rho[x.size() - 2];
+	vars.p[0] = vars.p[1];
+	vars.p[x.size() - 1] = vars.p[x.size() - 2];
+}
+
+void Euler::SetOpenBoundaryCondition()
+{
+	vars.u[0] = vars.u[1];
+	vars.u[x.size() - 1] = vars.u[x.size() - 2];
 	vars.rho[0] = vars.rho[1];
 	vars.rho[x.size() - 1] = vars.rho[x.size() - 2];
 	vars.p[0] = vars.p[1];
@@ -103,6 +128,8 @@ Array Euler::CalculateDeltaFlux(uint i)
 		return FluxProcessor::GodunovSecondOrder(*this, i);
 	case uint(SchemeType::Roe):
 		return FluxProcessor::Roe(*this, i);
+	case uint(SchemeType::StegerWorming):
+		return FluxProcessor::StegerWorming(*this, i);
 	default:
 		throw "Unrecognized scheme order";
 		break;
@@ -134,7 +161,7 @@ void Euler::Solve()
 	const double time = std::stod(parameters["time"]);
 	const double CFL = std::stod(parameters["CFL"]);
 	double dt(0.), t(0.);
-	dt = 1e-7;
+	dt = 1e-6;
 	do
 	{
 		Visitor* printVisitor = new PrintVisitor();
@@ -149,10 +176,10 @@ void Euler::Solve()
 		vars.RecalculateVariables(*w, prop);
 		//if (!vars.u > 0)
 		//	UpdateTimeStep(vars.u, CFL, dx, dt);
-		
-		this->SetWallBoundaryCondition();
+		std::cout << "time: " << t << ", u[100] " << vars.u[100] << '\n';
+		//this->SetWallBoundaryCondition();
+		this->SetOpenBoundaryCondition();
 		t += dt;
-		//std::cout << t << '\n';
 	} while (t < time);
 	std::cout << "Actual t " << t << ", neseccery time " << time << '\n';
 }
@@ -161,14 +188,15 @@ void Euler::MakeOutput(const std::string& outFile)
 {
 	std::ofstream outStream(outFile);
 	const std::string tab{ "		" };
-	outStream << "Variables = X,Ro,U,P,T" << '\n';
+	PhysLaws::SoundSpeed c(vars, prop);
+	outStream << "Variables = X,Ro,U,P,T,M" << '\n';
 	outStream << "Zone i = " << x.size() - 2 << '\n';
 	outStream << std::fixed << std::setprecision(6);
 	for (auto i = 1; i < x.size() - 1; ++i)
 	{
 		outStream << std::setw(16);
 		outStream << x[i] << tab << vars.rho[i] << tab <<
-			vars.u[i] << tab << vars.p[i] << tab << (*prop.T)(i) << '\n';
+			vars.u[i] << tab << vars.p[i] << tab << (*prop.T)(i) << tab << vars.u[i] / c(i) << '\n';
 	}
 }
 

@@ -4,6 +4,8 @@
 #include "UnknownsProperties.h"
 #include "MathOperations.h"
 struct EnergyFunctors;
+struct FaceValues;
+enum class Order;
 
 class Funct
 {
@@ -83,6 +85,10 @@ public:
 	{
 		return vars.rho[i] * vars.u[i];
 	}
+	double Calculate(double rho, double u)
+	{
+		return rho * u;
+	}
 	~F1Funct() {};
 };
 
@@ -93,7 +99,11 @@ public:
 	F2Funct(Unknowns& vars) : vars(vars) {};
 	double operator()(uint i) override
 	{
-		return vars.rho[i] * pow(vars.u[i], 2);
+		return vars.rho[i] * pow(vars.u[i], 2) + vars.p[i];
+	}
+	double Calculate(double rho, double u, double p)
+	{
+		return rho * u * u + p;
 	}
 	~F2Funct() {};
 };
@@ -109,6 +119,7 @@ public:
 	{
 		return vars.rho[i] * vars.u[i] * (*H)(i);
 	}
+	double Calculate(double, double, double);
 	~F3Funct() {};
 };
 
@@ -132,8 +143,14 @@ public:
 
 namespace RoeFunct
 {
-	enum class Direction{Forward, Backward};
-	class Rho : public Funct
+	class InterfaceVar : public Funct
+	{
+	public:
+		InterfaceVar() {};
+		virtual double operator()(uint) = 0;
+		virtual double Calculate(const FaceValues&) = 0;
+	};
+	class Rho : public InterfaceVar
 	{
 		Unknowns & vars;
 	public:
@@ -142,9 +159,10 @@ namespace RoeFunct
 		{
 			return std::sqrt(vars.rho[i] * vars.rho[i + 1]);
 		}
+		double Calculate(const FaceValues& f) override;
 		~Rho() {};
 	};
-	class U : public Funct
+	class U : public InterfaceVar
 	{
 		Unknowns& vars;
 	public:
@@ -155,54 +173,58 @@ namespace RoeFunct
 				vars.u[i + 1] * sqrt(vars.rho[i + 1])) /
 				(sqrt(vars.rho[i]) + sqrt(vars.rho[i + 1]));
 		}
+		double Calculate(const FaceValues& f) override;
 		~U() {};
 	};
-	class H : public Funct
+	class H : public InterfaceVar
 	{
 		Unknowns& vars;
-		Funct* m_H;
+		Funct& m_H;
 	public:
-		H(Unknowns& vars, Funct* H) : vars(vars),
+		H(Unknowns& vars, Funct& H) : vars(vars),
 			m_H(H) {};
 		double operator()(uint i) override
 		{
-			return ((*m_H)(i) * sqrt(vars.rho[i]) +
-				(*m_H)(i + 1) * sqrt(vars.rho[i + 1])) /
+			return (m_H(i) * sqrt(vars.rho[i]) +
+				m_H(i + 1) * sqrt(vars.rho[i + 1])) /
 				(sqrt(vars.rho[i]) + sqrt(vars.rho[i + 1]));
 		}
+		double Calculate(const FaceValues& f) override;
 		~H() {};
 	};
-	class P : public Funct
+	class P : public InterfaceVar
 	{
-		Funct* m_rho;
-		Funct* m_H;
-		Funct* m_u;
+		Funct& m_rho;
+		Funct& m_H;
+		Funct& m_u;
 		Properties& m_prop;
 	public:
-		P(Funct* rho, Funct* H, Funct* u, Properties& prop) : m_rho(rho),
+		P(Funct& rho, Funct& H, Funct& u, Properties& prop) : m_rho(rho),
 			m_H(H), m_u(u), m_prop(prop) {};
 		double operator()(uint i) override
 		{
 			double g(m_prop.gamma);
-			return (g - 1.) / g * (*m_rho)(i) *
-				((*m_H)(i) - 1. / 2. * pow((*m_u)(i), 2.0));
+			return (g - 1.) / g * m_rho(i) *
+				(m_H(i) - 1. / 2. * pow(m_u(i), 2.0));
 		}
+		double Calculate(const FaceValues& f) override;
 		~P() {};
 	};
-	class C : public Funct
+	class C : public InterfaceVar
 	{
-		Funct* m_H;
-		Funct* m_u;
+		Funct& m_H;
+		Funct& m_u;
 		Properties& m_prop;
 	public:
-		C(Funct* H, Funct* u, Properties& prop) : m_H(H), m_u(u),
+		C(Funct& H, Funct& u, Properties& prop) : m_H(H), m_u(u),
 			m_prop(prop) {};
 		double operator()(uint i) override
 		{
 			double g(m_prop.gamma);
-			return sqrt((g - 1.) * ((*m_H)(i) -
-				1. / 2. * pow((*m_u)(i), 2)));
+			return sqrt((g - 1.) * (m_H(i) -
+				1. / 2. * pow(m_u(i), 2)));
 		}
+		double Calculate(const FaceValues& f) override;
 		~C() {};
 	};
 	class Dissipation
@@ -218,7 +240,104 @@ namespace RoeFunct
 			Funct& rho, Funct& H, Funct& p) : vars(vars), u(u), c(c),
 			rho(rho), H(H), p(p) {};
 		Array operator() (uint);
+		Array operator()(const FaceValues&);
 		~Dissipation() {};
+	private:
+		double del_p = 0, del_u = 0, del_rho = 0;
+		double H_ = 0, rho_ = 0, u_ = 0, c_ = 0;
+		double coeff1 = 0, coeff2 = 0, coeff3 = 0;
+		Array arr1 = { 0, 0, 0 }, arr2 = { 0, 0, 0 },
+			arr3 = { 0, 0, 0 };
+		Array Calculate();
+	};
+}
+
+namespace StegerWorming
+{
+	enum class FaceSide
+	{
+		Left,
+		Right
+	};
+
+	class FunctArray
+	{
+	public:
+		FunctArray() {};
+		virtual Array operator()(uint) = 0;
+		virtual Array operator()(FaceValues&, const FaceSide&) = 0;
+		virtual ~FunctArray() {};
+	};
+
+	class EigenValues : public FunctArray
+	{
+	private:
+		Unknowns& vars;
+		Funct& c;
+	public:
+		EigenValues(Unknowns& vars, Funct& soundSpeed) :
+			vars(vars), c(soundSpeed) {};
+		Array operator()(uint i) override
+		{
+			return Array{ vars.u[i], vars.u[i] + c(i), vars.u[i] - c(i) };
+		}
+		Array operator()(FaceValues&, const FaceSide&) override;
+	};
+
+	class EigenValuesPositive : public FunctArray
+	{
+	private:
+		FunctArray& lambda;
+	public:
+		EigenValuesPositive(FunctArray& lambda) : lambda(lambda) {};
+		Array operator()(uint i)
+		{
+			return (lambda(i) + mod(lambda(i))) * 0.5;
+		}
+		Array operator()(FaceValues&, const FaceSide&) override;
+	};
+
+	class EigenValuesNegative : public FunctArray
+	{
+	private:
+		FunctArray& lambda;
+	public:
+		EigenValuesNegative(FunctArray& lambda) : lambda(lambda) {};
+		Array operator()(uint i)
+		{
+			return (lambda(i) - mod(lambda(i))) * 0.5;
+		}
+		Array operator()(FaceValues&, const FaceSide&) override;
+	};
+	class Flux : public FunctArray
+	{
+	private:
+		Unknowns& vars;
+		Properties& prop;
+		FunctArray& lambda;
+		Funct& soundSpeed;
+	public:
+		Flux(Unknowns& vars, Properties& prop, FunctArray& lambda, Funct& c) :
+			vars(vars), prop(prop), lambda(lambda), soundSpeed(c) {};
+		Array Calculate()
+		{
+			coeff1 = 2. * (g - 1.) * l1 + l2 + l3;
+			coeff2 = 2. * (g - 1.) * l1 * u + l2 * (u + c) + l3 * (u - c);
+			coeff3 = (g - 1.) * l1 * u * u + 0.5 * l2 * pow(u + c, 2) +
+				0.5 * l3 * (u - c, 2) + (3. - g) * c * c / (2. * (g - 1)) * (l2 + l3);
+			return rho / (2. * g) * Array { coeff1, coeff2, coeff3 };
+		}
+		Array operator()(uint i)
+		{
+			l1 = lambda(i)[0]; l2 = lambda(i)[1]; l3 = lambda(i)[2];
+			g = prop.gamma; rho = vars.rho[i]; c = soundSpeed(i); u = vars.u[i];
+			return this->Calculate();
+		}
+		Array operator()(FaceValues&, const FaceSide&);
+	private:
+		double l1 = 0, l2 = 0, l3 = 0,
+			g = 0, rho = 0, c = 0, u = 0,
+			coeff1 = 0, coeff2 = 0, coeff3 = 0;
 	};
 }
 

@@ -22,6 +22,25 @@ namespace PhysLaws
 		}
 	};
 
+	class IdealGasLaw : public Funct
+	{
+	private:
+		Unknowns& vars;
+		Properties& prop;
+	public:
+		IdealGasLaw(Unknowns& vars, Properties& prop) : vars(vars),
+			prop(prop) {};
+
+		double operator()(uint i)
+		{
+			return  vars.p[i] / (vars.rho[i] * prop.R);
+		}
+		static double CalcTemp(double pf, double rhof, double R)
+		{
+			return pf / (rhof * R);
+		}
+	};
+
 	class TotalEnthalpy : public Funct
 	{
 	private:
@@ -34,24 +53,27 @@ namespace PhysLaws
 		{
 			return prop.Cp * (*prop.T)(i) + pow(vars.u[i], 2) / 2.;
 		}
+		double Calculate(double rho, double u, double p)
+		{
+			return prop.Cp * IdealGasLaw::CalcTemp(p, rho, prop.R) + u * u / 2;
+		}
 	};
 
-	class IdealGasLaw : public Funct
+	class SoundSpeed : public Funct
 	{
 	private:
 		Unknowns& vars;
 		Properties& prop;
 	public:
-		IdealGasLaw(Unknowns& vars, Properties& prop) : vars(vars),
-		prop(prop){};
-
+		SoundSpeed(Unknowns& vars, Properties& prop) :
+			vars(vars), prop(prop) {};
 		double operator()(uint i)
 		{
-			return  vars.p[i] / (vars.rho[i] * prop.R);
+			return sqrt(prop.gamma * vars.p[i] / vars.rho[i]);
 		}
-		static double CalcTemp(double pf, double rhof, double R)
+		double Calculate(const double& rho, const double& p)
 		{
-			return pf / (rhof * R);
+			return sqrt(prop.gamma * p / rho);
 		}
 	};
 }

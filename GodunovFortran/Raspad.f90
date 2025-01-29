@@ -13,8 +13,8 @@ subroutine RASPAD(AK,P1,R1,U1,P2,R2,U2,PBIG,UBIG,RBIG1,RBIG2,DL1,DL2,DP1,DP2) bi
 
       REAL,EXTERNAL :: FGOD,DIVFGOD
 
-      EPSP=1.0E-7
-      EPS=1.0E-7
+      EPSP=1.0E-8
+      EPS=1.0E-8
 
       AK1=AK  
       AK2=AK  
@@ -34,7 +34,7 @@ subroutine RASPAD(AK,P1,R1,U1,P2,R2,U2,PBIG,UBIG,RBIG1,RBIG2,DL1,DL2,DP1,DP2) bi
 1     PBIGN=PBIG-(FGOD(PBIG,P1,R1,AK1)+FGOD(PBIG,P2,R2,AK2)-(U1-U2))/(DIVFGOD(PBIG,P1,R1,AK1)+DIVFGOD(PBIG,P2,R2,AK2))
             
       IF (PBIGN<0.0) THEN
-        !WRITE (*,*) PBIG,FLAG
+        WRITE (*,*) PBIG,FLAG
         !PAUSE
         PBIG=1.0E-05
         RBIG1=0.0
@@ -87,7 +87,7 @@ subroutine RASPAD(AK,P1,R1,U1,P2,R2,U2,PBIG,UBIG,RBIG1,RBIG2,DL1,DL2,DP1,DP2) bi
       ENDIF
 
       RETURN
-      END subroutine
+      END
 
       REAL function FGOD(PBIG,P,R,AK) bind(c, name = 'fgod')
       use iso_c_binding  

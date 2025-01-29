@@ -9,6 +9,12 @@ $!VarSet |LFDSFN4| = '"outputEulerGodSO.plt"'
 $!VarSet |LFDSVL4| = '"X" "Ro" "U" "P" "T" "M"'
 $!VarSet |LFDSFN5| = '"outputEulerRow.plt"'
 $!VarSet |LFDSVL5| = '"X" "Ro" "U" "P" "T" "M"'
+$!VarSet |LFDSFN6| = '"outputEulerRowSO.plt"'
+$!VarSet |LFDSVL6| = '"X" "Ro" "U" "P" "T" "M"'
+$!VarSet |LFDSFN7| = '"outputEulerStegerWormingFO.plt"'
+$!VarSet |LFDSVL7| = '"X" "Ro" "U" "P" "T" "M"'
+$!VarSet |LFDSFN8| = '"outputEulerStegerWormingSO.plt"'
+$!VarSet |LFDSVL8| = '"X" "Ro" "U" "P" "T" "M"'
 $!SetStyleBase Factory
 $!GlobalPaper 
   PaperSizeInfo
@@ -98,6 +104,40 @@ $!ReadDataSet  '|LFDSFN5|'
   VarNameList = '|LFDSVL5|'
 $!RemoveVar |LFDSVL5|
 $!RemoveVar |LFDSFN5|
+$!ReadDataSet  '|LFDSFN6|'
+  InitialPlotType = XYLine
+  IncludeText = No
+  IncludeGeom = No
+  ReadDataOption = Append
+  ResetStyle = No
+  AssignStrandIDs = Yes
+  VarLoadMode = ByName
+  VarNameList = '|LFDSVL6|'
+$!RemoveVar |LFDSVL6|
+$!RemoveVar |LFDSFN6|
+$!DeleteZones  [1-2]
+$!ReadDataSet  '|LFDSFN7|'
+  InitialPlotType = XYLine
+  IncludeText = No
+  IncludeGeom = No
+  ReadDataOption = Append
+  ResetStyle = No
+  AssignStrandIDs = Yes
+  VarLoadMode = ByName
+  VarNameList = '|LFDSVL7|'
+$!RemoveVar |LFDSVL7|
+$!RemoveVar |LFDSFN7|
+$!ReadDataSet  '|LFDSFN8|'
+  InitialPlotType = XYLine
+  IncludeText = No
+  IncludeGeom = No
+  ReadDataOption = Append
+  ResetStyle = No
+  AssignStrandIDs = Yes
+  VarLoadMode = ByName
+  VarNameList = '|LFDSVL8|'
+$!RemoveVar |LFDSVL8|
+$!RemoveVar |LFDSFN8|
 $!FrameLayout 
   ShowHeader = No
   HeaderColor = Red
@@ -116,7 +156,7 @@ $!FrameName  = 'Frame 001'
 $!GlobalTime 
   SolutionTime = 0
 $!DeleteLineMaps 
-$!ActiveLineMaps  =  [5,9,13]
+$!ActiveLineMaps  =  [5-6]
 $!GlobalLinePlot 
   DataLabels
     {
@@ -127,120 +167,15 @@ $!GlobalLinePlot
     Show = Yes
     XYPos
       {
-      X = 100
-      Y = 98.546
+      X = 96.156
+      Y = 96.865
       }
     }
 $!LineMap  [1]
-  Name = 'Ro_FOU'
-  Assign
-    {
-    Zone = 1
-    XAxisVar = 1
-    YAxisVar = 2
-    }
-  Lines
-    {
-    Color = Red
-    LineThickness = 0.4
-    }
-  Symbols
-    {
-    Color = Red
-    FillColor = Red
-    }
-  BarCharts
-    {
-    Color = Red
-    FillColor = Red
-    }
-  ErrorBars
-    {
-    Color = Red
-    }
-$!LineMap  [2]
-  Name = 'U_mine'
-  Assign
-    {
-    Zone = 1
-    XAxisVar = 1
-    YAxisVar = 3
-    }
-  Lines
-    {
-    Color = Green
-    }
-  Symbols
-    {
-    Color = Green
-    FillColor = Green
-    }
-  BarCharts
-    {
-    Color = Green
-    FillColor = Green
-    }
-  ErrorBars
-    {
-    Color = Green
-    }
-$!LineMap  [3]
-  Name = 'P_mine'
-  Assign
-    {
-    Zone = 1
-    XAxisVar = 1
-    YAxisVar = 4
-    }
-  Lines
-    {
-    Color = Blue
-    }
-  Symbols
-    {
-    Color = Blue
-    FillColor = Blue
-    }
-  BarCharts
-    {
-    Color = Blue
-    FillColor = Blue
-    }
-  ErrorBars
-    {
-    Color = Blue
-    }
-$!LineMap  [4]
-  Name = 'T_mine'
-  Assign
-    {
-    Zone = 1
-    XAxisVar = 1
-    YAxisVar = 5
-    }
-  Lines
-    {
-    Color = Custom1
-    }
-  Symbols
-    {
-    Color = Custom1
-    FillColor = Custom1
-    }
-  BarCharts
-    {
-    Color = Custom1
-    FillColor = Custom1
-    }
-  ErrorBars
-    {
-    Color = Custom1
-    }
-$!LineMap  [5]
   Name = 'Ro_GodFO'
   Assign
     {
-    Zone = 3
+    Zone = 1
     XAxisVar = 1
     YAxisVar = 2
     }
@@ -263,197 +198,38 @@ $!LineMap  [5]
     {
     Color = Blue
     }
-$!LineMap  [6]
-  Name = 'U_other'
-  Assign
-    {
-    Zone = 2
-    XAxisVar = 1
-    YAxisVar = 3
-    }
-  Lines
-    {
-    Color = Purple
-    }
-  Symbols
-    {
-    Color = Purple
-    FillColor = Purple
-    }
-  BarCharts
-    {
-    Color = Purple
-    FillColor = Purple
-    }
-  ErrorBars
-    {
-    Color = Purple
-    }
-$!LineMap  [7]
-  Name = 'P_other'
-  Assign
-    {
-    Zone = 2
-    XAxisVar = 1
-    YAxisVar = 4
-    }
-  Lines
-    {
-    Color = Red
-    }
-  Symbols
-    {
-    Color = Red
-    FillColor = Red
-    }
-  BarCharts
-    {
-    Color = Red
-    FillColor = Red
-    }
-  ErrorBars
-    {
-    Color = Red
-    }
-$!LineMap  [8]
-  Name = 'T_other'
-  Assign
-    {
-    Zone = 2
-    XAxisVar = 1
-    YAxisVar = 5
-    }
-  Lines
-    {
-    Color = Green
-    }
-  Symbols
-    {
-    Color = Green
-    FillColor = Green
-    }
-  BarCharts
-    {
-    Color = Green
-    FillColor = Green
-    }
-  ErrorBars
-    {
-    Color = Green
-    }
-$!LineMap  [9]
+$!LineMap  [2]
   Name = 'Ro_GodSO'
   Assign
     {
-    Zone = 4
-    XAxisVar = 1
-    YAxisVar = 2
-    }
-  Lines
-    {
-    Color = Custom1
-    LineThickness = 0.4
-    }
-  Symbols
-    {
-    Color = Custom1
-    FillColor = Custom1
-    }
-  BarCharts
-    {
-    Color = Custom1
-    FillColor = Custom1
-    }
-  ErrorBars
-    {
-    Color = Custom1
-    }
-$!LineMap  [10]
-  Name = 'Ro_other'
-  Assign
-    {
     Zone = 2
     XAxisVar = 1
     YAxisVar = 2
     }
   Lines
     {
-    Color = Custom3
+    Color = Custom1
     LineThickness = 0.4
     }
   Symbols
     {
-    Color = Custom3
-    FillColor = Custom3
+    Color = Custom1
+    FillColor = Custom1
     }
   BarCharts
     {
-    Color = Custom3
-    FillColor = Custom3
+    Color = Custom1
+    FillColor = Custom1
     }
   ErrorBars
     {
-    Color = Custom3
+    Color = Custom1
     }
-$!LineMap  [11]
-  Name = 'U_GODFO'
+$!LineMap  [3]
+  Name = 'Ro_RoeFO'
   Assign
     {
     Zone = 3
-    XAxisVar = 1
-    YAxisVar = 3
-    }
-  Lines
-    {
-    Color = Purple
-    LineThickness = 0.4
-    }
-  Symbols
-    {
-    Color = Purple
-    FillColor = Purple
-    }
-  BarCharts
-    {
-    Color = Purple
-    FillColor = Purple
-    }
-  ErrorBars
-    {
-    Color = Purple
-    }
-$!LineMap  [12]
-  Name = 'U_GODSO'
-  Assign
-    {
-    Zone = 4
-    XAxisVar = 1
-    YAxisVar = 3
-    }
-  Lines
-    {
-    Color = Custom3
-    LineThickness = 0.4
-    }
-  Symbols
-    {
-    Color = Custom3
-    FillColor = Custom3
-    }
-  BarCharts
-    {
-    Color = Custom3
-    FillColor = Custom3
-    }
-  ErrorBars
-    {
-    Color = Custom3
-    }
-$!LineMap  [13]
-  Name = 'Ro_Roe'
-  Assign
-    {
-    Zone = 5
     XAxisVar = 1
     YAxisVar = 2
     }
@@ -476,6 +252,200 @@ $!LineMap  [13]
   ErrorBars
     {
     Color = Red
+    }
+$!LineMap  [4]
+  Name = 'Ro_RoeSO'
+  Assign
+    {
+    Zone = 4
+    XAxisVar = 1
+    YAxisVar = 2
+    }
+  Lines
+    {
+    Color = Green
+    LinePattern = LongDash
+    LineThickness = 0.4
+    }
+  Symbols
+    {
+    Color = Green
+    FillColor = Green
+    }
+  BarCharts
+    {
+    Color = Green
+    FillColor = Green
+    }
+  ErrorBars
+    {
+    Color = Green
+    }
+$!LineMap  [5]
+  Name = 'Ro_SW_FO'
+  Assign
+    {
+    Zone = 5
+    XAxisVar = 1
+    YAxisVar = 2
+    }
+  Lines
+    {
+    Color = Purple
+    LinePattern = DashDotDot
+    LineThickness = 0.4
+    }
+  Symbols
+    {
+    Color = Blue
+    FillColor = Blue
+    }
+  BarCharts
+    {
+    Color = Blue
+    FillColor = Blue
+    }
+  ErrorBars
+    {
+    Color = Blue
+    }
+$!LineMap  [6]
+  Name = 'Ro_SW_SO'
+  Assign
+    {
+    Zone = 6
+    XAxisVar = 1
+    YAxisVar = 2
+    }
+  Lines
+    {
+    Color = Red
+    LinePattern = DashDotDot
+    LineThickness = 0.4
+    }
+  Symbols
+    {
+    Color = Custom1
+    FillColor = Custom1
+    }
+  BarCharts
+    {
+    Color = Custom1
+    FillColor = Custom1
+    }
+  ErrorBars
+    {
+    Color = Custom1
+    }
+$!LineMap  [7]
+  Name = 'U_GODFO'
+  Assign
+    {
+    Zone = 1
+    XAxisVar = 1
+    YAxisVar = 3
+    }
+  Lines
+    {
+    Color = Purple
+    LineThickness = 0.4
+    }
+  Symbols
+    {
+    Color = Purple
+    FillColor = Purple
+    }
+  BarCharts
+    {
+    Color = Purple
+    FillColor = Purple
+    }
+  ErrorBars
+    {
+    Color = Purple
+    }
+$!LineMap  [8]
+  Name = 'U_GODSO'
+  Assign
+    {
+    Zone = 2
+    XAxisVar = 1
+    YAxisVar = 3
+    }
+  Lines
+    {
+    Color = Custom3
+    LineThickness = 0.4
+    }
+  Symbols
+    {
+    Color = Custom3
+    FillColor = Custom3
+    }
+  BarCharts
+    {
+    Color = Custom3
+    FillColor = Custom3
+    }
+  ErrorBars
+    {
+    Color = Custom3
+    }
+$!LineMap  [9]
+  Name = 'U_RoeFO'
+  Assign
+    {
+    Zone = 3
+    XAxisVar = 1
+    YAxisVar = 3
+    }
+  Lines
+    {
+    Color = Blue
+    LinePattern = Dashed
+    LineThickness = 0.4
+    }
+  Symbols
+    {
+    Color = Blue
+    FillColor = Blue
+    }
+  BarCharts
+    {
+    Color = Blue
+    FillColor = Blue
+    }
+  ErrorBars
+    {
+    Color = Blue
+    }
+$!LineMap  [10]
+  Name = 'U_RoeSO'
+  Assign
+    {
+    Zone = 4
+    XAxisVar = 1
+    YAxisVar = 3
+    }
+  Lines
+    {
+    Color = Custom1
+    LinePattern = Dashed
+    LineThickness = 0.4
+    }
+  Symbols
+    {
+    Color = Custom1
+    FillColor = Custom1
+    }
+  BarCharts
+    {
+    Color = Custom1
+    FillColor = Custom1
+    }
+  ErrorBars
+    {
+    Color = Custom1
     }
 $!XYLineAxis 
   DepXToYRatio = 1

@@ -11,7 +11,11 @@ public:
 	}
 	void Solve();
 
-	std::vector<double> GaussAnalytic();
+	std::vector<double> gGaussAnalytic();
+
+	void GaussAnalytic(const std::string&);
+	void SinAnalytic(const std::string&);
+	void StepAnalytic(const std::string&);
 	~ConvectionEquation() {};
 };
 
@@ -24,7 +28,7 @@ public:
 	}
 	void Solve();
 
-	void StepAnalyticOutput();
+	void StepAnalyticOutput(const std::string&);
 
 	~BurgersEquation() {};
 };

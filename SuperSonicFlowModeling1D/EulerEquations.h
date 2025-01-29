@@ -17,6 +17,8 @@ class Funct;
 struct EnergyFunctors;
 
 class EulerVariables;
+struct FaceValues;
+enum class FaceLocation;
 
 struct Visitor
 {
@@ -57,6 +59,7 @@ public:
 	std::string getKindVar() override { return "F"; }
 	size_t size() override { return vars.size(); }
 	InviscidFluxes(std::vector<Funct*> F) : EulerVariables(F) {};
+	Array GetFluxByValuesOnFace(FaceValues&);
 	~InviscidFluxes() {}	
 };
 
@@ -78,6 +81,7 @@ public:
 	Euler(const std::string&);
 	void Initialize();
 	void SetWallBoundaryCondition();
+	void SetOpenBoundaryCondition();
 	void Solve();
 	void MakeOutput(const std::string&);
 };

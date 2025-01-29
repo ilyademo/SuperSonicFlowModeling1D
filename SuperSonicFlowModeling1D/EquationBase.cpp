@@ -51,7 +51,7 @@ void Equation::InitializeSinField()
 	for (auto i = 0; i < numOfCells + 2; ++i)
 	{
 		x.push_back(i * dx - dx / 2);
-		U.push_back(sin(6 * PI * x[i]) + 3.0);
+		U.push_back(sin(8 * PI * x[i]));
 	}
 }
 void Equation::InitializeForwardStepField()
@@ -59,15 +59,40 @@ void Equation::InitializeForwardStepField()
 	int numOfCells = std::stoi(parameters["NX"]);
 	double L = std::stod(parameters["L"]);
 	double dx = L / numOfCells;
-	for (auto i = 0; i < (numOfCells + 2) / 2; ++i)
+	if (parameters["Step"] == "triple")
 	{
-		x.push_back(i * dx - dx / 2);
-		U.push_back(std::stod(parameters["Ul"]));
+		for (auto i = 0; i < (numOfCells + 2) / 3; ++i)
+		{
+			x.push_back(i * dx - dx / 2);
+			U.push_back(std::stod(parameters["Ul"]));
+		}
+		for (auto i = (numOfCells + 2) / 3; i < (numOfCells + 2) / 3 * 2; ++i)
+		{
+			x.push_back(i * dx - dx / 2);
+			U.push_back(std::stod(parameters["Ur"]));
+		}
+		for (auto i = (numOfCells + 2) / 3 * 2; i < numOfCells + 2; ++i)
+		{
+			x.push_back(i * dx - dx / 2);
+			U.push_back(std::stod(parameters["Ul"]));
+		}
 	}
-	for (auto i = (numOfCells + 2) / 2; i < numOfCells + 2; ++i)
+	else if (parameters["Step"] == "half")
 	{
-		x.push_back(i * dx - dx / 2);
-		U.push_back(std::stod(parameters["Ur"]));
+		for (auto i = 0; i < (numOfCells + 2) / 2; ++i)
+		{
+			x.push_back(i * dx - dx / 2);
+			U.push_back(std::stod(parameters["Ul"]));
+		}
+		for (auto i = (numOfCells + 2) / 2; i < (numOfCells + 2); ++i)
+		{
+			x.push_back(i * dx - dx / 2);
+			U.push_back(std::stod(parameters["Ur"]));
+		}
+	}
+	else
+	{
+		throw "Unrecognized step field";
 	}
 }
 
@@ -82,7 +107,7 @@ void Equation::InitializeGaussField()
 	for (auto i = 0; i < numOfCells + 2; ++i)
 	{
 		x.push_back(i * dx - dx / 2);
-		U.push_back(exp(-pow((x[i] - 0.5 * L), 2) / 0.02));
+		U.push_back(exp(-pow((x[i] - 0.5 * L), 2) / 0.05));
 	}
 }
 void Equation::MakeOutput(const std::string& outFile)

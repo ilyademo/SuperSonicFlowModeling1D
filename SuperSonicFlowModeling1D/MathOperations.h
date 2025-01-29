@@ -105,6 +105,16 @@ inline double operator!(const Array& vec)
 	return sqrt(res);
 }
 
+inline Array mod(const Array& vec)
+{
+	Array result(vec);
+	for (auto i = 0; i < result.size(); ++i)
+	{
+		result[i] = abs(result[i]);
+	}
+	return result;
+}
+
 inline std::ostream& operator<<(std::ostream& os, const Array& rvalue)
 {
 	for (auto i : rvalue)

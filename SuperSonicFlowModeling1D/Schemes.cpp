@@ -11,6 +11,7 @@ bool FluxProcessor::CheckConvFluxDirection(Euler& eq, uint i)
 
 Array FluxProcessor::FirstOrderUpdwind(Euler& eq, uint i)
 {
+	//do not use this, fix fluxes before
 	Array deltaF(3, 0);
 	bool front = CheckConvFluxDirection(eq, i);
 	bool back = CheckConvFluxDirection(eq, i - 1);
@@ -74,105 +75,123 @@ double FluxProcessor::gLimiter(const Array& arr, uint currentIndex)
 		return (r * r + r) / (r * r + 1);
 }
 
-Array FluxProcessor::GodunovSecondOrder(Euler& eq, uint i)
+auto FluxProcessor::CalculateFaceQuantities(Euler& eq, uint i, const FaceLocation& dir)
 {
 	using namespace std;
 	using PairDbl = pair<double&, double&>;
 	Array deltaF(3, 0);
-	double pl, pr, ul, ur, rhol, rhor;
-	vector<PairDbl> quantities{ { pl, pr }, { ul, ur }, { rhol, rhor } };
+	FaceValues f;
+	vector<PairDbl> quantities{ { f.pl, f.pr }, { f.ul, f.ur }, { f.rhol, f.rhor } };
 	vector<vector<double>> vars{ eq.vars.p, eq.vars.u, eq.vars.rho };
 	auto limiterCoeff{ [](vector<double> vec, uint j) {
 		return FluxProcessor::gLimiter(vec, j); } };
-
-	//Forward flux
-	for (size_t k = 0; k < 3; ++k)
+	switch (dir)
 	{
-		if (i != vars[k].size() - 2)
+	case FaceLocation::Front:
+		for (size_t k = 0; k < 3; ++k)
 		{
-			quantities[k].first = vars[k][i] + 1. / 2. * limiterCoeff(vars[k], i) * (vars[k][i] - vars[k][i - 1]);
-			quantities[k].second = vars[k][i + 1] - 1. / 2. * limiterCoeff(vars[k], i + 1) * (vars[k][i + 1] - vars[k][i]);
+			if (i != vars[k].size() - 2)
+			{
+				quantities[k].first = vars[k][i] + 1. / 2. * limiterCoeff(vars[k], i) * (vars[k][i] - vars[k][i - 1]);
+				quantities[k].second = vars[k][i + 1] - 1. / 2. * limiterCoeff(vars[k], i + 1) * (vars[k][i + 1] - vars[k][i]);
+			}
+			else
+			{
+				quantities[k].first = vars[k][i];
+				quantities[k].second = vars[k][i + 1];
+			}
 		}
-		else
-		{
-			quantities[k].first = vars[k][i];
-			quantities[k].second = vars[k][i + 1];
-		}
-	}
-	deltaF += FortranGOGO(pl, pr, ul, ur, rhol, rhor, eq.prop);
+		break;
 
-	//Backward flux
-	for (size_t k = 0; k < 3; ++k)
-	{
-		if (i != 1)
+	case FaceLocation::Back:
+		for (size_t k = 0; k < 3; ++k)
 		{
-			quantities[k].first = vars[k][i - 1] + 1. / 2. * limiterCoeff(vars[k], i - 1) * (vars[k][i - 1] - vars[k][i - 2]);
-			quantities[k].second = vars[k][i] - 1. / 2. * limiterCoeff(vars[k], i) * (vars[k][i] - vars[k][i - 1]);
+			if (i != 1)
+			{
+				quantities[k].first = vars[k][i - 1] + 1. / 2. * limiterCoeff(vars[k], i - 1) * (vars[k][i - 1] - vars[k][i - 2]);
+				quantities[k].second = vars[k][i] - 1. / 2. * limiterCoeff(vars[k], i) * (vars[k][i] - vars[k][i - 1]);
+			}
+			else
+			{
+				quantities[k].first = vars[k][i - 1];
+				quantities[k].second = vars[k][i];
+			}
 		}
-		else
-		{
-			quantities[k].first = vars[k][i - 1];
-			quantities[k].second = vars[k][i];
-		}
+		break;
 	}
-	deltaF -= FortranGOGO(pl, pr, ul, ur, rhol, rhor, eq.prop);
+	return f;
+}
 
-	return deltaF;
+Array FluxProcessor::GodunovSecondOrder(Euler& eq, uint i)
+{
+	auto f = FluxProcessor::CalculateFaceQuantities(eq, i, FaceLocation::Front);
+	auto rightF = FortranGOGO(f.pl, f.pr, f.ul, f.ur, f.rhol, f.rhor, eq.prop);
+
+	f = FluxProcessor::CalculateFaceQuantities(eq, i, FaceLocation::Back);
+	auto leftF = FortranGOGO(f.pl, f.pr, f.ul, f.ur, f.rhol, f.rhor, eq.prop);
+
+	return rightF - leftF;
 }
 
 Array FluxProcessor::Roe(Euler& eq, uint i)
 {
-	Array deltaF(3, 0);
-	Funct* rho = new RoeFunct::Rho(eq.vars);
-	Funct* u = new RoeFunct::U(eq.vars);
-	Funct* H = new RoeFunct::H(eq.vars, eq.enrg_fnctrs->H);
-	Funct* p = new RoeFunct::P(rho, H, u, eq.prop);
-	Funct* c = new RoeFunct::C(H, u, eq.prop);
+	FaceValues f;
+	Array rightF(3, 0), leftF(3, 0);
+	std::unique_ptr<Funct> rho = std::make_unique<RoeFunct::Rho>(eq.vars);
+	std::unique_ptr<Funct> u = std::make_unique<RoeFunct::U>(eq.vars);
+	std::unique_ptr<Funct> H = std::make_unique<RoeFunct::H>(eq.vars, *eq.enrg_fnctrs->H);
+	std::unique_ptr<Funct> p = std::make_unique<RoeFunct::P>(*rho, *H, *u, eq.prop);
+	std::unique_ptr<Funct> c = std::make_unique<RoeFunct::C>(*H, *u, eq.prop);
 	RoeFunct::Dissipation D(eq.vars, *u, *c, *rho, *H, *p);
-	Array unitSec{ 0, 1.0, 0 };
-	auto& flux(*(eq.F));
-
-	auto rightF = 0.5 * ((flux[i] + eq.vars.p[i] * unitSec) +
-		(flux[i + 1] + eq.vars.p[i + 1] * unitSec)) - 0.5 * D(i);
-	auto leftF = 0.5 * ((flux[i - 1] + eq.vars.p[i - 1] * unitSec) +
-		(flux[i] + eq.vars.p[i] * unitSec)) - 0.5 * D(i - 1);
-	deltaF = rightF - leftF;
-	delete rho, u, H, c, p;
-	return deltaF;
+	auto schemeOrder(static_cast<Order>(std::stoi(eq.parameters["RoeOrder"])));
+	auto& F(*(eq.F));
+	switch (schemeOrder)
+	{
+	case Order::High:
+		f = FluxProcessor::CalculateFaceQuantities(eq, i, FaceLocation::Front);
+		rightF = 0.5 * F.GetFluxByValuesOnFace(f) - 0.5 * D(f);
+		f = FluxProcessor::CalculateFaceQuantities(eq, i, FaceLocation::Back);
+		leftF = 0.5 * F.GetFluxByValuesOnFace(f) - 0.5 * D(f);
+		break;
+	case Order::Low:
+		rightF = 0.5 * (F[i] + F[i + 1]) - 0.5 * D(i);
+		leftF = 0.5 * (F[i - 1] + F[i]) - 0.5 * D(i - 1);
+		break;
+	default:
+		throw "Unrecognized Roe scheme order";
+	}	
+	return rightF - leftF;
 }
 
-double FluxProcessor::GetDeltaForRoe(const std::vector<double>& vec, uint i,
-	const RoeFunct::Direction& dir)
+Array FluxProcessor::StegerWorming(Euler& eq, uint i)
 {
-	auto limiterCoeff{ [](std::vector<double> vec, uint j) {
-		return FluxProcessor::gLimiter(vec, j); } };
-	double result(0);
-	switch (dir) 
+	using namespace StegerWorming;
+	FaceValues f;
+	Array rightF(3, 0), leftF(3, 0);
+	std::unique_ptr<Funct> c = std::make_unique<PhysLaws::SoundSpeed>(eq.vars, eq.prop);
+	std::unique_ptr<FunctArray> eigenValues = std::make_unique<EigenValues>(eq.vars, *c);
+	std::unique_ptr<FunctArray> lambdaPlus = std::make_unique<EigenValuesPositive>(*eigenValues);
+	std::unique_ptr<FunctArray> lambdaMinus = std::make_unique<EigenValuesNegative>(*eigenValues);
+	std::unique_ptr<FunctArray> fluxPlus = std::make_unique<Flux>(eq.vars, eq.prop, *lambdaPlus, *c);
+	std::unique_ptr<FunctArray> fluxMinus = std::make_unique<Flux>(eq.vars, eq.prop, *lambdaMinus, *c);
+	auto& fPlus(*fluxPlus);
+	auto& fMinus(*fluxMinus);
+
+	auto schemeOrder(static_cast<Order>(std::stoi(eq.parameters["StegerWormingOrder"])));
+	switch (schemeOrder)
 	{
-	case RoeFunct::Direction::Forward:
-		if (i != vec.size() - 2)
-		{
-			result -= vec[i] + 1. / 2. * limiterCoeff(vec, i) * (vec[i] - vec[i - 1]);
-			result += vec[i + 1] - 1. / 2. * limiterCoeff(vec, i + 1) * (vec[i + 1] - vec[i]);
-		}
-		else
-		{
-			result -= vec[i];
-			result += vec[i + 1];
-		}
+	case Order::High:
+		f = FluxProcessor::CalculateFaceQuantities(eq, i, FaceLocation::Front);
+		rightF = fPlus(f, FaceSide::Left) + fMinus(f, FaceSide::Right);
+		f = FluxProcessor::CalculateFaceQuantities(eq, i, FaceLocation::Back);
+		leftF = fPlus(f, FaceSide::Left) + fMinus(f, FaceSide::Right);
 		break;
-	case RoeFunct::Direction::Backward:
-		if (i != 1)
-		{
-			result -= vec[i - 1] + 1. / 2. * limiterCoeff(vec, i - 1) * (vec[i - 1] - vec[i - 2]);
-			result += vec[i] - 1. / 2. * limiterCoeff(vec, i) * (vec[i] - vec[i - 1]);
-		}
-		else
-		{
-			result -= vec[i - 1];
-			result += vec[i];
-		}
+	case Order::Low:
+		rightF = fPlus(i) + fMinus(i + 1);
+		leftF = fPlus(i - 1) + fMinus(i);
 		break;
+	default:
+		throw "Unrecognized StegerWorming scheme order";
 	}
-	return result;
+	return rightF - leftF;
 }
